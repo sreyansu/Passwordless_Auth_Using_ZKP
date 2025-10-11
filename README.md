@@ -144,6 +144,62 @@ Login Process:
 - Never stores or transmits the actual PIN
 - All cryptographic calculations use JavaScript's native BigInt type
 
+### ZKP vs Traditional Passwords
+
+#### Traditional Password Authentication
+1. **Storage**: 
+   - Server stores hashed passwords in database
+   - Even hashed passwords can be vulnerable to rainbow table attacks
+   - If database is breached, all hashed passwords are exposed
+
+2. **Transmission**:
+   - Password is sent to server (even if encrypted during transit)
+   - Vulnerable to man-in-the-middle attacks
+   - Each login attempt transmits sensitive data
+
+3. **Verification**:
+   - Server compares stored hash with hash of submitted password
+   - Server must process actual password data
+   - Password exists in server memory during verification
+
+#### Zero-Knowledge Proof Authentication
+1. **Storage**:
+   - Server only stores public value (v = g^x mod p)
+   - No password or hash is ever stored
+   - Database breach reveals no sensitive information
+
+2. **Transmission**:
+   - PIN/password never leaves the client
+   - Only mathematical proofs are transmitted
+   - Each login uses different random values
+
+3. **Verification**:
+   - Server verifies mathematical relationship
+   - Server never sees or processes the actual PIN
+   - Nothing sensitive exists in server memory
+
+#### Key Advantages of ZKP
+- **True Zero Knowledge**: Server can verify without knowing the secret
+- **No Password Database**: Nothing to steal in a breach
+- **Dynamic Proofs**: Each login generates unique values
+- **Mathematical Security**: Based on hard mathematical problems
+- **Future-Proof**: Resistant to quantum computing attacks
+
+#### Example Comparison
+```
+Traditional Password:
+1. User enters password "1234"
+2. Password is hashed: hash("1234") = "e7df7cd2ca07f4f1ab415d457a6e1c13"
+3. Hash is sent to server
+4. Server compares received hash with stored hash
+
+ZKP Authentication:
+1. User enters PIN "1234"
+2. PIN never leaves the device
+3. Client proves knowledge of PIN through mathematical proof
+4. Server verifies proof without knowing PIN
+```
+
 ## Getting Started
 
 1. Clone the repository
