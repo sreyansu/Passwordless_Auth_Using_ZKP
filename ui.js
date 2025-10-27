@@ -5,7 +5,6 @@ function switchTab(tab) {
     const registerForm = document.getElementById('registerForm');
     const loginForm = document.getElementById('loginForm');
     const loggedInView = document.getElementById('loggedInView');
-
     if (tab === 'register') {
         registerTab.classList.add('bg-indigo-600', 'text-white');
         loginTab.classList.remove('bg-indigo-600', 'text-white');
@@ -20,7 +19,6 @@ function switchTab(tab) {
         loggedInView.classList.add('hidden');
     }
 }
-
 function showMessage(message, isError = false) {
     const messageBox = document.getElementById('messageBox');
     messageBox.textContent = message;

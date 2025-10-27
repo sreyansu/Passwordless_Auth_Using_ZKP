@@ -9,20 +9,12 @@
     <link rel="stylesheet" href="styles.css">
     <script>
         tailwind.config = {
-            theme: {
-                extend: {
-                    fontFamily: {
-                        'sans': ['Inter', 'sans-serif'],
-                    },
-                }
-            }
-        }
+            theme: {extend: {fontFamily: {'sans': ['Inter', 'sans-serif'],},}}}
     </script>
 </head>
 <body class="bg-gray-50 font-sans">
     <div class="min-h-screen p-8">
         <h1 class="text-3xl font-bold text-center mb-8 text-gray-800">Zero-Knowledge Proof Authentication</h1>
-        
         <div class="container mx-auto grid grid-cols-1 md:grid-cols-2 gap-8">
             <!-- Left Column: Authentication Portal -->
             <div class="bg-white p-6 rounded-lg shadow-lg">
@@ -30,7 +22,6 @@
                     <button id="registerTab" class="px-4 py-2 rounded-md font-medium focus:outline-none transition-colors" onclick="switchTab('register')">Register</button>
                     <button id="loginTab" class="px-4 py-2 rounded-md font-medium focus:outline-none transition-colors" onclick="switchTab('login')">Login</button>
                 </div>
-
                 <!-- Register Form -->
                 <form id="registerForm" class="space-y-4">
                     <div>
@@ -45,7 +36,6 @@
                         Register
                     </button>
                 </form>
-
                 <!-- Login Form -->
                 <form id="loginForm" class="space-y-4 hidden">
                     <div>
@@ -60,9 +50,8 @@
                         Login
                     </button>
                 </form>
-
                 <!-- Logged In View -->
-                <div id="loggedInView" class="hidden fixed inset-0 bg-white z-50">
+                <!-- <div id="loggedInView" class="hidden fixed inset-0 bg-white z-50">
                     <div class="min-h-screen flex flex-col items-center justify-center p-8 bg-gradient-to-br from-indigo-500 to-purple-600 text-white">
                         <div class="max-w-2xl w-full bg-white rounded-2xl p-8 shadow-2xl text-center">
                             <div class="text-6xl mb-6 animate-bounce">⚠️</div>
@@ -85,12 +74,10 @@
                             </div>
                         </div>
                     </div>
-                </div>
-
+                </div> -->
                 <!-- Message Box -->
                 <div id="messageBox" class="mt-4 p-4 rounded-md hidden"></div>
             </div>
-
             <!-- Right Column: Explanation & Live Log -->
             <div class="space-y-6">
                 <!-- Server Database -->
@@ -98,7 +85,6 @@
                     <h2 class="text-xl font-semibold mb-4">Server Database</h2>
                     <pre id="serverDatabase" class="bg-gray-50 p-4 rounded-md text-sm font-mono overflow-x-auto min-h-[100px] border border-gray-200"></pre>
                 </div>
-
                 <!-- Live Log -->
                 <div class="bg-white p-6 rounded-lg shadow-lg">
                     <h2 class="text-xl font-semibold mb-4">Explanation & Live Log</h2>
@@ -107,7 +93,6 @@
             </div>
         </div>
     </div>
-
     <script src="zkp.js"></script>
     <script src="ui.js"></script>
 </body>
