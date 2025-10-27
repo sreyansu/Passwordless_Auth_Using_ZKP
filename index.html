@@ -8,8 +8,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="styles.css">
     <script>
-        tailwind.config = {
-            theme: {extend: {fontFamily: {'sans': ['Inter', 'sans-serif'],},}}}
+        tailwind.config = {theme: {extend: {fontFamily: {'sans': ['Inter', 'sans-serif'],},}}}
     </script>
 </head>
 <body class="bg-gray-50 font-sans">
@@ -50,31 +49,6 @@
                         Login
                     </button>
                 </form>
-                <!-- Logged In View -->
-                <!-- <div id="loggedInView" class="hidden fixed inset-0 bg-white z-50">
-                    <div class="min-h-screen flex flex-col items-center justify-center p-8 bg-gradient-to-br from-indigo-500 to-purple-600 text-white">
-                        <div class="max-w-2xl w-full bg-white rounded-2xl p-8 shadow-2xl text-center">
-                            <div class="text-6xl mb-6 animate-bounce">⚠️</div>
-                            <h2 class="text-4xl font-bold text-gray-800 mb-4">Unusual Authentication Pattern</h2>
-                            <div class="text-gray-600 space-y-4">
-                                <p class="text-xl">The Zero-Knowledge Proof validation succeeded, but this might indicate a security issue.</p>
-                                <p class="text-lg">The mathematical proof was verified, but the credentials used may be compromised.</p>
-                                <div class="mt-6 p-4 bg-yellow-50 rounded-lg">
-                                    <p class="text-yellow-700">Security Status: <span class="font-semibold">Warning ⚠️</span></p>
-                                    <p class="text-sm mt-2">This could indicate that someone is attempting to use a different PIN with your username.</p>
-                                </div>
-                            </div>
-                            <div class="mt-8 space-x-4">
-                                <button onclick="logout()" class="px-6 py-3 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors shadow-lg">
-                                    Logout
-                                </button>
-                                <button onclick="showProtocolDetails()" class="px-6 py-3 bg-purple-100 text-purple-700 rounded-lg hover:bg-purple-200 transition-colors">
-                                    View Protocol Details
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                </div> -->
                 <!-- Message Box -->
                 <div id="messageBox" class="mt-4 p-4 rounded-md hidden"></div>
             </div>
