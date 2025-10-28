@@ -607,7 +607,7 @@
                         <div class="user-info">
                             <h3>👤 Authenticated User</h3>
                             <p><strong>Public Key:</strong> ${data.user.publicKey}</p>
-                            <p><strong>Registered:</strong> ${new Date(data.user.registeredAt).toLocaleString()}</p>
+                            <p><strong>Authenticated At:</strong> ${data.user.authenticatedAt ? new Date(data.user.authenticatedAt).toLocaleString() : 'Unavailable'}</p>
                             <p><strong>Status:</strong> ✅ Authenticated via Zero-Knowledge Proof</p>
                         </div>
                     `;

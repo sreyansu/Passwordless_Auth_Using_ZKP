@@ -32,7 +32,8 @@ export const handler = async (event) => {
         success: true,
         user: {
           publicKey: payload.publicKey.substring(0, 16) + '...',
-          authenticated: true
+          authenticated: true,
+          authenticatedAt: new Date(payload.iat * 1000).toISOString()
         }
       })
     };
