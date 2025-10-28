@@ -65,11 +65,7 @@ function authenticateToken(req, res, next) {
 
 // API Endpoints
 
-/**
- * POST /register
- * Register a new user with their public key
- */
-app.post('/register', async (req, res) => {
+async function registerHandler(req, res) {
     try {
         const { publicKey } = req.body;
 
@@ -106,13 +102,12 @@ app.post('/register', async (req, res) => {
         console.error('Registration error:', error);
         res.status(500).json({ error: 'Registration failed' });
     }
-});
+}
 
-/**
- * POST /login/start
- * Start the login process by generating a nonce challenge
- */
-app.post('/login/start', (req, res) => {
+app.post('/register', registerHandler);
+app.post('/.netlify/functions/register', registerHandler);
+
+function loginStartHandler(req, res) {
     try {
         const { publicKey } = req.body;
 
@@ -145,13 +140,12 @@ app.post('/login/start', (req, res) => {
         console.error('Login start error:', error);
         res.status(500).json({ error: 'Failed to start login process' });
     }
-});
+}
 
-/**
- * POST /login/finish
- * Complete the login by verifying the Schnorr signature (ZKP)
- */
-app.post('/login/finish', async (req, res) => {
+app.post('/login/start', loginStartHandler);
+app.post('/.netlify/functions/login-start', loginStartHandler);
+
+async function loginFinishHandler(req, res) {
     try {
         const { publicKey, signature } = req.body;
 
@@ -238,13 +232,12 @@ app.post('/login/finish', async (req, res) => {
         console.error('Login finish error:', error);
         res.status(500).json({ error: 'Authentication failed' });
     }
-});
+}
 
-/**
- * GET /me
- * Get current authenticated user information
- */
-app.get('/me', authenticateToken, (req, res) => {
+app.post('/login/finish', loginFinishHandler);
+app.post('/.netlify/functions/login-finish', loginFinishHandler);
+
+function meHandler(req, res) {
     const { publicKey } = req.user;
     const user = users.get(publicKey);
 
@@ -257,10 +250,14 @@ app.get('/me', authenticateToken, (req, res) => {
         user: {
             publicKey: publicKey.substring(0, 16) + '...',
             registeredAt: user.registeredAt,
-            authenticated: true
+            authenticated: true,
+            authenticatedAt: new Date((req.user.iat || Math.floor(Date.now()/1000)) * 1000).toISOString()
         }
     });
-});
+}
+
+app.get('/me', authenticateToken, meHandler);
+app.get('/.netlify/functions/me', authenticateToken, meHandler);
 
 // Serve the client HTML file
 app.get('/', (req, res) => {
