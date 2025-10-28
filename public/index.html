@@ -1,0 +1,653 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ZKP Passwordless Authentication Demo</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            height: 100vh;
+            overflow: hidden;
+            margin: 0;
+            padding: 10px;
+        }
+
+        .container {
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            padding: 20px;
+            height: calc(100vh - 20px);
+            width: calc(100vw - 20px);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 15px;
+            flex-shrink: 0;
+        }
+
+        .header h1 {
+            color: #333;
+            margin-bottom: 5px;
+            font-size: 2.2em;
+            font-weight: 700;
+        }
+
+        .header p {
+            color: #666;
+            font-size: 1em;
+            margin: 0;
+        }
+
+        .main-content {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            grid-template-rows: 1fr 1fr;
+            gap: 20px;
+            flex: 1;
+            overflow: hidden;
+        }
+
+        .section {
+            padding: 20px;
+            border: 2px solid #e9ecef;
+            border-radius: 12px;
+            transition: border-color 0.3s ease;
+            background: #fafbfc;
+            display: flex;
+            flex-direction: column;
+            overflow-y: auto;
+        }
+
+        .section:hover {
+            border-color: #667eea;
+        }
+
+        .section:hover {
+            border-color: #667eea;
+        }
+
+        .section h2 {
+            color: #333;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 1.1em;
+            font-weight: 600;
+            flex-shrink: 0;
+        }
+
+        .section-icon {
+            font-size: 1.5em;
+        }
+
+        button {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 10px 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            margin-bottom: 8px;
+            width: 100%;
+            flex-shrink: 0;
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(102, 126, 234, 0.3);
+        }
+
+        button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        .key-display {
+            background: #f8f9fa;
+            border: 2px solid #dee2e6;
+            border-radius: 6px;
+            padding: 12px;
+            margin: 8px 0;
+            font-family: 'Courier New', monospace;
+            font-size: 11px;
+            word-break: break-all;
+            color: #495057;
+            min-height: 60px;
+            max-height: 120px;
+            overflow-y: auto;
+            overflow-x: hidden;
+            line-height: 1.3;
+            flex: 1;
+            transition: border-color 0.3s ease;
+            /* Custom scrollbar styling */
+            scrollbar-width: thin;
+            scrollbar-color: #667eea #f1f1f1;
+            /* Ensure content is visible */
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+
+        .key-display:hover {
+            border-color: #667eea;
+        }
+
+        .key-display:focus-within {
+            border-color: #667eea;
+            box-shadow: 0 0 0 2px rgba(102, 126, 234, 0.1);
+        }
+
+        /* Webkit scrollbar styling for better appearance */
+        .key-display::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .key-display::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 4px;
+        }
+
+        .key-display::-webkit-scrollbar-thumb {
+            background: #667eea;
+            border-radius: 4px;
+        }
+
+        .key-display::-webkit-scrollbar-thumb:hover {
+            background: #5a6fd8;
+        }
+
+        /* Add a subtle shadow to indicate scrollable content */
+        .key-display:not(:empty) {
+            box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        /* Empty state styling */
+        .key-display:empty::before {
+            content: "Key will appear here...";
+            color: #adb5bd;
+            font-style: italic;
+        }
+
+        .status {
+            padding: 10px;
+            border-radius: 6px;
+            margin: 8px 0;
+            font-weight: 500;
+            font-size: 0.9em;
+            flex-shrink: 0;
+        }
+
+        .status.success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .status.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        .status.info {
+            background: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+        }
+
+        .user-info {
+            background: #e7f3ff;
+            border: 1px solid #b3d9ff;
+            border-radius: 8px;
+            padding: 20px;
+            margin-top: 20px;
+        }
+
+        .user-info h3 {
+            color: #0066cc;
+            margin-bottom: 10px;
+        }
+
+        .user-info {
+            background: #e7f3ff;
+            border: 1px solid #b3d9ff;
+            border-radius: 6px;
+            padding: 10px;
+            margin-top: 10px;
+            font-size: 0.9em;
+            flex: 1;
+            overflow-y: auto;
+        }
+
+        .user-info h3 {
+            color: #0066cc;
+            margin-bottom: 8px;
+            font-size: 1em;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        /* Mobile responsive */
+        @media (max-width: 768px) {
+            .main-content {
+                grid-template-columns: 1fr;
+                grid-template-rows: repeat(4, auto);
+                gap: 15px;
+            }
+
+            .container {
+                padding: 15px;
+                height: auto;
+                overflow-y: auto;
+            }
+
+            .header h1 {
+                font-size: 1.8em;
+            }
+
+            .section {
+                padding: 15px;
+            }
+
+            .key-display {
+                font-size: 10px;
+                max-height: 100px;
+                padding: 10px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🔐 ZKP Passwordless Auth</h1>
+            <p>Zero-Knowledge Proof Authentication Demo</p>
+        </div>
+
+        <!-- <div class="zkp-explanation">
+            <h3>🧠 How Zero-Knowledge Proof Works Here</h3>
+            <p><strong>The Magic:</strong> You can prove you own a private key without ever revealing it!</p>
+            <p><strong>The Process:</strong> You generate a key pair, register your public key, then prove ownership by
+                signing challenges with your private key. The server verifies using your public key - no passwords
+                needed!</p>
+        </div> -->
+
+        <div class="main-content">
+            <!-- Top Left: Key Generation -->
+            <div class="section">
+                <h2><span class="section-icon">🔑</span>Step 1: Generate Key Pair</h2>
+                <button onclick="generateKeys()">Generate New Key Pair</button>
+                <div id="keyDisplay" class="hidden">
+                    <div class="status info">
+                        ⚠️ <strong>Demo Only:</strong> Private keys should NEVER be displayed in production!
+                    </div>
+                    <p><strong>Private Key:</strong></p>
+                    <div id="privateKey" class="key-display" placeholder="Private key will appear here..."></div>
+                    <p><strong>Public Key:</strong></p>
+                    <div id="publicKey" class="key-display" placeholder="Public key will appear here..."></div>
+                </div>
+            </div>
+
+            <!-- Top Right: Registration -->
+            <div class="section">
+                <h2><span class="section-icon">📝</span>Step 2: Register</h2>
+                <button onclick="register()" id="registerBtn" disabled>Register Public Key</button>
+                <div id="registerStatus"></div>
+                <div
+                    style="margin-top: 15px; padding: 15px; background: #f8f9fa; border-radius: 8px; font-size: 0.9em;">
+                    <h4 style="margin: 0 0 10px 0; color: #333;">🧠 Zero-Knowledge Proof Magic:</h4>
+                    <p style="margin: 0; color: #555; line-height: 1.4;">You prove you own a private key without ever
+                        revealing it! Generate keys → Register public key → Sign challenges → Server verifies without
+                        seeing your private key.</p>
+                </div>
+            </div>
+
+            <!-- Bottom Left: Login -->
+            <div class="section">
+                <h2><span class="section-icon">🚪</span>Step 3: Login (ZKP Authentication)</h2>
+                <button onclick="startLogin()" id="loginBtn" disabled>Start Login</button>
+                <button onclick="finishLogin()" id="finishLoginBtn" disabled class="hidden">Complete Login</button>
+                <div id="loginStatus"></div>
+                <div id="nonceDisplay" class="hidden">
+                    <p><strong>Challenge Nonce:</strong></p>
+                    <div id="nonce" class="key-display"></div>
+                </div>
+            </div>
+
+            <!-- Bottom Right: Protected Access -->
+            <div class="section">
+                <h2><span class="section-icon">👤</span>Step 4: Access Protected Resource</h2>
+                <button onclick="getMe()" id="getMeBtn" disabled>Get My Info</button>
+                <button onclick="logout()" id="logoutBtn" disabled>Logout</button>
+                <div id="userInfo"></div>
+            </div>
+        </div>
+
+        <div id="globalStatus"></div>
+    </div>
+
+    <script>
+        // Using Web Crypto API - built into all modern browsers
+
+        // Global state
+        let privateKey = null;
+        let publicKey = null;
+        let currentNonce = null;
+        let authToken = null;
+
+        // Make functions globally available
+        window.generateKeys = generateKeys;
+        window.register = register;
+        window.startLogin = startLogin;
+        window.finishLogin = finishLogin;
+        window.getMe = getMe;
+        window.logout = logout;
+
+        /**
+         * Generate a new secp256k1 key pair
+         * This creates the cryptographic foundation for our ZKP system
+         */
+        async function generateKeys() {
+            try {
+                console.log('Starting key generation...');
+
+                // Generate ECDSA key pair using P-256 curve (widely supported)
+                const keyPair = await window.crypto.subtle.generateKey(
+                    {
+                        name: "ECDSA",
+                        namedCurve: "P-256",
+                    },
+                    true, // extractable
+                    ["sign", "verify"]
+                );
+
+                console.log('Key pair generated');
+
+                // Export both keys for display (demo purposes only!)
+                const publicKeyBuffer = await window.crypto.subtle.exportKey("spki", keyPair.publicKey);
+                const privateKeyBuffer = await window.crypto.subtle.exportKey("pkcs8", keyPair.privateKey);
+
+                const publicKeyHex = Array.from(new Uint8Array(publicKeyBuffer))
+                    .map(b => b.toString(16).padStart(2, '0')).join('');
+                const privateKeyHex = Array.from(new Uint8Array(privateKeyBuffer))
+                    .map(b => b.toString(16).padStart(2, '0')).join('');
+
+                // Store the key pair (keep private key as CryptoKey object for signing)
+                privateKey = keyPair.privateKey;
+                publicKey = publicKeyBuffer;
+
+                // Display the actual keys for demonstration
+                document.getElementById('privateKey').textContent = privateKeyHex;
+                document.getElementById('publicKey').textContent = publicKeyHex;
+                document.getElementById('keyDisplay').classList.remove('hidden');
+
+                // Ensure both key displays are visible and scrollable
+                console.log('Private key length:', privateKeyHex.length);
+                console.log('Public key length:', publicKeyHex.length);
+
+                // Enable registration
+                document.getElementById('registerBtn').disabled = false;
+
+                showStatus('globalStatus', 'Key pair generated successfully! 🎉', 'success');
+                console.log('Key pair generated successfully');
+                console.log('Private Key (DEMO ONLY):', privateKeyHex);
+                console.log('Public Key:', publicKeyHex);
+
+            } catch (error) {
+                console.error('Key generation error:', error);
+                showStatus('globalStatus', 'Failed to generate keys: ' + error.message, 'error');
+            }
+        }
+
+        /**
+         * Register the public key with the server
+         * This is like creating an account, but with just a public key instead of username/password
+         */
+        async function register() {
+            if (!publicKey) {
+                showStatus('registerStatus', 'Please generate keys first!', 'error');
+                return;
+            }
+
+            try {
+                const publicKeyHex = Array.from(new Uint8Array(publicKey))
+                    .map(b => b.toString(16).padStart(2, '0')).join('');
+
+                const response = await fetch('/register', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        publicKey: publicKeyHex
+                    })
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    showStatus('registerStatus', `Registration successful! Public key: ${data.publicKey}`, 'success');
+                    document.getElementById('loginBtn').disabled = false;
+                } else {
+                    showStatus('registerStatus', 'Registration failed: ' + data.error, 'error');
+                }
+
+            } catch (error) {
+                console.error('Registration error:', error);
+                showStatus('registerStatus', 'Registration failed: ' + error.message, 'error');
+            }
+        }
+
+        /**
+         * Start the login process by requesting a challenge nonce
+         * The server generates a random number that we must sign to prove key ownership
+         */
+        async function startLogin() {
+            if (!publicKey) {
+                showStatus('loginStatus', 'Please generate keys and register first!', 'error');
+                return;
+            }
+
+            try {
+                const publicKeyHex = Array.from(new Uint8Array(publicKey))
+                    .map(b => b.toString(16).padStart(2, '0')).join('');
+
+                const response = await fetch('/login/start', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        publicKey: publicKeyHex
+                    })
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    currentNonce = data.nonce;
+                    document.getElementById('nonce').textContent = currentNonce;
+                    document.getElementById('nonceDisplay').classList.remove('hidden');
+                    document.getElementById('finishLoginBtn').classList.remove('hidden');
+                    document.getElementById('finishLoginBtn').disabled = false;
+
+                    showStatus('loginStatus', 'Challenge received! Now sign it to prove your identity.', 'info');
+                } else {
+                    showStatus('loginStatus', 'Login start failed: ' + data.error, 'error');
+                }
+
+            } catch (error) {
+                console.error('Login start error:', error);
+                showStatus('loginStatus', 'Login start failed: ' + error.message, 'error');
+            }
+        }
+
+        /**
+         * Complete the login by creating and sending a Schnorr signature
+         * This is the Zero-Knowledge Proof - we prove we know the private key without revealing it
+         */
+        async function finishLogin() {
+            if (!privateKey || !currentNonce) {
+                showStatus('loginStatus', 'Please start login first!', 'error');
+                return;
+            }
+
+            try {
+                // Convert nonce to ArrayBuffer for signing
+                const encoder = new TextEncoder();
+                const message = encoder.encode(currentNonce);
+
+                // Sign the message using Web Crypto API
+                // This is the ZKP magic - the signature proves we know the private key
+                // without revealing it to anyone
+                const signature = await window.crypto.subtle.sign(
+                    {
+                        name: "ECDSA",
+                        hash: { name: "SHA-256" },
+                    },
+                    privateKey,
+                    message
+                );
+
+                // Convert signature to hex
+                const signatureHex = Array.from(new Uint8Array(signature))
+                    .map(b => b.toString(16).padStart(2, '0')).join('');
+
+                const publicKeyHex = Array.from(new Uint8Array(publicKey))
+                    .map(b => b.toString(16).padStart(2, '0')).join('');
+
+                // Send the signature to the server for verification
+                const response = await fetch('/login/finish', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        publicKey: publicKeyHex,
+                        signature: signatureHex
+                    })
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    authToken = data.token;
+                    showStatus('loginStatus', `🎉 Authentication successful! Token expires in ${data.expiresIn}.`, 'success');
+
+                    // Enable protected actions
+                    document.getElementById('getMeBtn').disabled = false;
+                    document.getElementById('logoutBtn').disabled = false;
+
+                    // Hide login elements
+                    document.getElementById('finishLoginBtn').classList.add('hidden');
+                    document.getElementById('nonceDisplay').classList.add('hidden');
+
+                } else {
+                    showStatus('loginStatus', 'Authentication failed: ' + data.error, 'error');
+                }
+
+            } catch (error) {
+                console.error('Login finish error:', error);
+                showStatus('loginStatus', 'Authentication failed: ' + error.message, 'error');
+            }
+        }
+
+        /**
+         * Access a protected resource using the JWT token
+         * This demonstrates that we're now authenticated
+         */
+        async function getMe() {
+            if (!authToken) {
+                showStatus('userInfo', 'Please login first!', 'error');
+                return;
+            }
+
+            try {
+                const response = await fetch('/me', {
+                    method: 'GET',
+                    headers: {
+                        'Authorization': `Bearer ${authToken}`,
+                        'Content-Type': 'application/json',
+                    }
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    const userInfoHtml = `
+                        <div class="user-info">
+                            <h3>👤 Authenticated User</h3>
+                            <p><strong>Public Key:</strong> ${data.user.publicKey}</p>
+                            <p><strong>Registered:</strong> ${new Date(data.user.registeredAt).toLocaleString()}</p>
+                            <p><strong>Status:</strong> ✅ Authenticated via Zero-Knowledge Proof</p>
+                        </div>
+                    `;
+                    document.getElementById('userInfo').innerHTML = userInfoHtml;
+                } else {
+                    showStatus('userInfo', 'Failed to get user info: ' + data.error, 'error');
+                }
+
+            } catch (error) {
+                console.error('Get user info error:', error);
+                showStatus('userInfo', 'Failed to get user info: ' + error.message, 'error');
+            }
+        }
+
+        /**
+         * Logout and clear the session
+         */
+        function logout() {
+            authToken = null;
+            currentNonce = null;
+
+            // Reset UI state
+            document.getElementById('getMeBtn').disabled = true;
+            document.getElementById('logoutBtn').disabled = true;
+            document.getElementById('finishLoginBtn').classList.add('hidden');
+            document.getElementById('nonceDisplay').classList.add('hidden');
+            document.getElementById('loginBtn').disabled = false;
+
+            // Clear displays
+            document.getElementById('userInfo').innerHTML = '';
+            document.getElementById('loginStatus').innerHTML = '';
+
+            showStatus('globalStatus', 'Logged out successfully!', 'info');
+        }
+
+        /**
+         * Helper function to display status messages
+         */
+        function showStatus(elementId, message, type) {
+            const element = document.getElementById(elementId);
+            element.innerHTML = `<div class="status ${type}">${message}</div>`;
+        }
+
+        // Initialize the demo
+        console.log('🔐 ZKP Passwordless Authentication Demo loaded!');
+        console.log('Click "Generate New Key Pair" to start the demo.');
+    </script>
+</body>
+
+</html>

@@ -1,238 +1,186 @@
-# Zero-Knowledge Proof Authentication Demo
+# ZKP Passwordless Authentication Demo
 
-This project demonstrates passwordless authentication using a Zero-Knowledge Proof (ZKP) protocol, specifically implementing the Schnorr protocol. The application allows users to register and authenticate without ever sending their actual PIN/password to the server, showcasing the power of ZKP in modern authentication systems.
+A complete demonstration of passwordless authentication using **Zero-Knowledge Proof (ZKP)** with Schnorr signatures and the Fiat-Shamir transform.
 
-## Understanding Zero-Knowledge Proof
+## 🔐 How Zero-Knowledge Proof Works
 
-A Zero-Knowledge Proof is a method where one party (the Prover) can prove to another party (the Verifier) that they know a value x, without conveying any information apart from the fact that they know the value x.
+This demo implements a **Schnorr proof of private-key ownership** where:
 
-### How Our ZKP Implementation Works
+1. **Client generates a key pair** (private key `sk`, public key `pk = sk * G`)
+2. **Registration**: Client sends `pk` to server (no password needed!)
+3. **Authentication Challenge**: Server generates a random nonce
+4. **Zero-Knowledge Proof**: Client signs the nonce with `sk` (Schnorr signature)
+5. **Verification**: Server verifies the signature using `pk`
+6. **Success**: If valid, client proved they know `sk` without revealing it!
 
-We use the Schnorr protocol, which works as follows:
+### The Magic ✨
 
-#### Registration Phase
-```
-Given: 
-- Public parameters: prime p = 1117, generator g = 5
-- User's secret: PIN (x)
+The client **proves ownership of the private key without ever revealing it**. The server can verify the proof using only the public key. No passwords, no secrets shared!
 
-1. Client computes: v = g^x mod p
-2. Server stores: only v (public key)
+## 🚀 Quick Start
 
-Example:
-If PIN = 1234
-v = 5^1234 mod 1117
-Server only knows v, not the PIN
-```
+### Prerequisites
 
-#### Login Phase (Interactive Proof)
-```
-Step 1 - Client Commitment:
-- Client generates random r
-- Computes y1 = g^r mod p
-- Sends y1 to server
+- Node.js (v16 or higher)
+- npm or yarn
 
-Step 2 - Server Challenge:
-- Server generates random challenge c
-- Sends c to client
+### Installation & Setup
 
-Step 3 - Client Response:
-- Client computes y2 = r + c*x
-- Sends y2 to server
+1. **Install dependencies:**
+   ```bash
+   npm install
+   ```
 
-Step 4 - Server Verification:
-- Server checks if g^y2 mod p = (y1 * v^c) mod p
-```
+2. **Start the server:**
+   ```bash
+   npm start
+   ```
+   
+   Or for development with auto-reload:
+   ```bash
+   npm run dev
+   ```
 
-### Real-World Example
+3. **Open the demo:**
+   Navigate to `http://localhost:3000` in your browser
 
-Let's walk through a complete example:
+## 🎯 Demo Flow
 
-```
-Registration:
-1. User chooses PIN = 1234
-2. Client calculates v = 5^1234 mod 1117
-3. Server stores v = 892 (example value)
+### Step 1: Generate Key Pair
+- Click "Generate New Key Pair"
+- Creates a secp256k1 private/public key pair
+- Private key stays in browser (never sent to server!)
 
-Login Process:
-1. Client Commitment:
-   - Generates random r = 50
-   - Calculates y1 = 5^50 mod 1117 = 351
+### Step 2: Register
+- Click "Register Public Key"
+- Sends only the public key to server
+- No username or password required!
 
-2. Server Challenge:
-   - Generates random c = 93
+### Step 3: Login (ZKP Authentication)
+- Click "Start Login" → Server sends random challenge nonce
+- Click "Complete Login" → Browser signs nonce with private key
+- Server verifies signature using stored public key
+- Success = JWT token issued!
 
-3. Client Response:
-   - Calculates y2 = 50 + (93 * 1234) = 114,812
+### Step 4: Access Protected Resources
+- Click "Get My Info" to access authenticated endpoint
+- JWT token proves you're authenticated
+- Click "Logout" to clear session
 
-4. Server Verification:
-   - Checks if 5^114812 mod 1117 equals (351 * 892^93) mod 1117
-   - If equal, authentication succeeds!
-```
+## 🏗️ Architecture
 
-### Security Properties
+### Backend (`server.js`)
+- **Express.js** server with CORS enabled
+- **Web Crypto API** for cryptographic operations
+- **jsonwebtoken** for session management
+- In-memory storage for demo (no database needed)
 
-1. Zero-Knowledge: The server never learns the PIN
-2. Soundness: Cannot authenticate without knowing the correct PIN
-3. Completeness: Correct PIN always authenticates successfully
+### Frontend (`public/index.html`)
+- Vanilla HTML/CSS/JavaScript
+- **Web Crypto API** (built into browsers) for client-side crypto
+- Responsive design with step-by-step UI
 
-### Why It's Secure
+### API Endpoints
 
-- Even if an attacker intercepts all communication, they cannot:
-  - Recover the original PIN
-  - Reuse the proof (because c is random each time)
-  - Generate a valid proof without knowing the PIN
+| Endpoint | Method | Purpose |
+|----------|--------|---------|
+| `POST /register` | Register public key |
+| `POST /login/start` | Get challenge nonce |
+| `POST /login/finish` | Submit ZKP signature |
+| `GET /me` | Access protected resource |
+| `GET /health` | Server health check |
 
-## Features
+## 🔧 Technical Details
 
-- **Passwordless Authentication**: Uses Zero-Knowledge Proofs instead of traditional password transmission
-- **Interactive Demo**: Step-by-step visualization of the ZKP protocol in action
-- **Real-time Logging**: See exactly what's happening during the authentication process
-- **Clean UI**: Modern, responsive interface built with Tailwind CSS
-- **Pure JavaScript**: No external JS dependencies, uses native BigInt for cryptographic calculations
+### Cryptography Stack
+- **Curve**: P-256 (NIST standard, widely supported)
+- **Signature Scheme**: ECDSA signatures
+- **Hash Function**: SHA-256
+- **Key Format**: SPKI format public keys
+- **API**: Web Crypto API (built into browsers)
 
-## Technology Stack
+### Security Features
+- **JWT Expiry**: 15 minutes (configurable)
+- **Nonce Validation**: Single-use challenges
+- **CORS Protection**: Configurable origins
+- **Input Validation**: Public key format verification
 
-- **HTML5**: Structure and content
-- **Tailwind CSS**: Styling and layout (loaded via CDN)
-- **Vanilla JavaScript**: All logic and cryptographic calculations
-- **Inter Font**: Modern typography
+### Zero-Knowledge Proof Implementation
 
-## Project Structure
+```javascript
+// Client side - Create proof
+const encoder = new TextEncoder();
+const message = encoder.encode(nonce);
+const signature = await crypto.subtle.sign(
+  { name: "ECDSA", hash: { name: "SHA-256" } },
+  privateKey,
+  message
+);
 
-```
-.
-├── README.md
-├── index.html      # Main HTML file
-├── styles.css      # Custom styles beyond Tailwind
-├── zkp.js          # ZKP protocol implementation
-└── ui.js           # UI management and event handlers
-```
-
-## How It Works
-
-### Registration Process
-
-1. User enters a username and a 4-digit PIN
-2. Client calculates v = g^x mod p (where x is the PIN)
-3. Only the public value v is stored in the server database
-4. The PIN (secret x) is never transmitted or stored
-
-### Login Process (Schnorr Protocol)
-
-1. **Client Commitment**:
-   - Client generates random r
-   - Calculates y1 = g^r mod p
-   - Sends y1 to server
-
-2. **Server Challenge**:
-   - Server generates random challenge c
-   - Sends c to client
-
-3. **Client Response**:
-   - Client calculates proof y2 = r + c*x
-   - Sends y2 to server
-
-4. **Server Verification**:
-   - Server checks if g^y2 mod p = (y1 * v^c) mod p
-   - If equal, authentication succeeds
-
-## Security Features
-
-- Uses cryptographically secure random number generation
-- Implements efficient modular exponentiation
-- Never stores or transmits the actual PIN
-- All cryptographic calculations use JavaScript's native BigInt type
-
-### ZKP vs Traditional Passwords
-
-#### Traditional Password Authentication
-1. **Storage**: 
-   - Server stores hashed passwords in database
-   - Even hashed passwords can be vulnerable to rainbow table attacks
-   - If database is breached, all hashed passwords are exposed
-
-2. **Transmission**:
-   - Password is sent to server (even if encrypted during transit)
-   - Vulnerable to man-in-the-middle attacks
-   - Each login attempt transmits sensitive data
-
-3. **Verification**:
-   - Server compares stored hash with hash of submitted password
-   - Server must process actual password data
-   - Password exists in server memory during verification
-
-#### Zero-Knowledge Proof Authentication
-1. **Storage**:
-   - Server only stores public value (v = g^x mod p)
-   - No password or hash is ever stored
-   - Database breach reveals no sensitive information
-
-2. **Transmission**:
-   - PIN/password never leaves the client
-   - Only mathematical proofs are transmitted
-   - Each login uses different random values
-
-3. **Verification**:
-   - Server verifies mathematical relationship
-   - Server never sees or processes the actual PIN
-   - Nothing sensitive exists in server memory
-
-#### Key Advantages of ZKP
-- **True Zero Knowledge**: Server can verify without knowing the secret
-- **No Password Database**: Nothing to steal in a breach
-- **Dynamic Proofs**: Each login generates unique values
-- **Mathematical Security**: Based on hard mathematical problems
-- **Future-Proof**: Resistant to quantum computing attacks
-
-#### Example Comparison
-```
-Traditional Password:
-1. User enters password "1234"
-2. Password is hashed: hash("1234") = "e7df7cd2ca07f4f1ab415d457a6e1c13"
-3. Hash is sent to server
-4. Server compares received hash with stored hash
-
-ZKP Authentication:
-1. User enters PIN "1234"
-2. PIN never leaves the device
-3. Client proves knowledge of PIN through mathematical proof
-4. Server verifies proof without knowing PIN
+// Server side - Verify proof  
+const isValid = await crypto.subtle.verify(
+  { name: "ECDSA", hash: { name: "SHA-256" } },
+  publicKey,
+  signature,
+  message
+);
 ```
 
-## Getting Started
+This is a **non-interactive zero-knowledge proof** using the Fiat-Shamir transform:
+- The random nonce acts as the "challenge"
+- The signature is the "response" 
+- No interaction needed beyond the initial challenge
 
-1. Clone the repository
-2. Open `index.html` in a modern web browser
-3. Try registering a new user with a 4-digit PIN
-4. Observe the server database (right panel) storing only the public value
-5. Try logging in and watch the ZKP protocol in action
+## 🛡️ Security Considerations
 
-## Development
+### Production Readiness Checklist
+- [ ] Use HTTPS in production
+- [ ] Implement rate limiting
+- [ ] Add proper database with encryption
+- [ ] Use environment variables for secrets
+- [ ] Add request logging and monitoring
+- [ ] Implement proper error handling
+- [ ] Add input sanitization
+- [ ] Consider key rotation mechanisms
 
-To modify or enhance the project:
+### Current Limitations (Demo Only)
+- In-memory storage (data lost on restart)
+- No rate limiting
+- Simple JWT secret (change in production)
+- No HTTPS (use reverse proxy in production)
 
-1. **HTML Changes**: Edit `index.html` for structure modifications
-2. **Styling**: Add custom styles to `styles.css`
-3. **ZKP Logic**: Modify `zkp.js` for protocol changes
-4. **UI Behavior**: Update `ui.js` for interface modifications
+## 🧪 Testing the Demo
 
-## Browser Compatibility
+1. **Generate Keys**: Creates cryptographic key pair
+2. **Register**: Stores public key on server
+3. **Login**: Proves private key ownership via signature
+4. **Access**: Uses JWT for authenticated requests
+5. **Logout**: Clears session and tokens
 
-The application requires a modern browser that supports:
-- ES6+ JavaScript
-- BigInt type
-- CSS Grid
-- Flexbox
+Try multiple users by generating different key pairs!
 
-## Educational Value
+## 📚 Learn More
 
-This demo is particularly useful for:
-- Understanding Zero-Knowledge Proof concepts
-- Learning about cryptographic protocols
-- Seeing real-world applications of modular arithmetic
-- Studying modern web authentication methods
+### Zero-Knowledge Proofs
+- [Zero-Knowledge Proofs: An Illustrated Primer](https://blog.cryptographyengineering.com/2014/11/27/zero-knowledge-proofs-illustrated-primer/)
+- [Schnorr Signatures Explained](https://medium.com/coinmonks/schnorr-signatures-explained-3d2b5b2d2c8c)
 
-## Security Note
+### Cryptography
+- [@noble/secp256k1 Documentation](https://github.com/paulmillr/noble-secp256k1)
+- [Elliptic Curve Cryptography](https://andrea.corbellini.name/2015/05/17/elliptic-curve-cryptography-a-gentle-introduction/)
 
-This is a demonstration project and should not be used in production without proper security auditing and hardening. The implementation is simplified for educational purposes.
+## 🤝 Contributing
+
+This is a demo project for educational purposes. Feel free to:
+- Report issues or bugs
+- Suggest improvements
+- Add features (React frontend, database integration, etc.)
+- Improve documentation
+
+## 📄 License
+
+MIT License - feel free to use this code for learning and experimentation!
+
+---
+
+**🎉 Enjoy exploring passwordless authentication with Zero-Knowledge Proofs!**

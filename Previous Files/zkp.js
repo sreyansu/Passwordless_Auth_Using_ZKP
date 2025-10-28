@@ -28,26 +28,59 @@ function getRandomBigInt(min, max) {
     return value + min;
 }
 
-async function handleRegistration(username, pin) {
-    if (window.serverDatabase[username]) {
-        return { success: false, message: 'Username already exists!' };
-    }
-
-    addToLog('Registration Started...');
-    addToLog(`CLIENT: Using PIN as secret x (never sent to server)`);
-
-    const v = modPow(g, pin, p);
-    addToLog(`CLIENT: Calculating v = g^x mod p = ${v}`);
-
-    window.serverDatabase[username] = { v: v.toString() };
-    addToLog('SERVER: Storing public value v in database');
-    updateServerDatabase();
-
-    console.log(`✅ Stored: username=${username}, v=${v}`);
-    return { success: true, message: 'Registration successful!' };
+function storageKeyForUser(username) {
+    return `zkp:${username}:privKey`;
 }
 
-async function handleLogin(username, pin) {
+function getPrivateKey(username) {
+    const xStr = window.localStorage.getItem(storageKeyForUser(username));
+    return xStr ? BigInt(xStr) : null;
+}
+
+async function handleRegistration(username) {
+    addToLog('Registration Started...');
+    const serverUser = window.serverDatabase[username];
+    const existingX = getPrivateKey(username);
+
+    if (serverUser && existingX) {
+        const vLocal = modPow(g, existingX, p).toString();
+        if (vLocal !== serverUser.v) {
+            addToLog('CLIENT: Local private key does not match server public key', true);
+            return { success: false, message: 'Key mismatch with server. Use the original device or import the correct key.' };
+        }
+        addToLog('SERVER: User already registered and keys match');
+        return { success: true, message: 'Already registered on this device.' };
+    }
+
+    if (serverUser && !existingX) {
+        addToLog('CLIENT: No local private key found for existing server user', true);
+        return { success: false, message: 'User exists on server but private key is missing on this device. Import key or login on original device.' };
+    }
+
+    if (!serverUser && existingX) {
+        const v = modPow(g, existingX, p);
+        window.serverDatabase[username] = { v: v.toString() };
+        addToLog('CLIENT: Found existing private key.');
+        addToLog('SERVER: Registered using existing public key v');
+        updateServerDatabase();
+        console.log(`Registered (existing key): username=${username}, v=${v}`);
+        return { success: true, message: 'Registered using existing private key.' };
+    }
+
+    const x = getRandomBigInt(1n, p - 2n);
+    const v = modPow(g, x, p);
+    window.localStorage.setItem(storageKeyForUser(username), x.toString());
+    window.serverDatabase[username] = { v: v.toString() };
+    addToLog('CLIENT: Generated private key x');
+    addToLog(`CLIENT: Calculated public key v = g^x mod p = ${v}`);
+    addToLog('SERVER: Storing public key v in database');
+    updateServerDatabase();
+
+    console.log(`Stored: username=${username}, v=${v}`);
+    return { success: true, message: 'Registration successful! Private key stored locally.' };
+}
+
+async function handleLogin(username) {
     if (!window.serverDatabase[username]) {
         return { success: false, message: 'User not found!' };
     }
@@ -67,7 +100,13 @@ async function handleLogin(username, pin) {
     addToLog(`SERVER: Generated random challenge c = ${c}`);
     await new Promise(resolve => setTimeout(resolve, 1000));
 
-    const y2 = r + c * pin;
+    const xStr = window.localStorage.getItem(storageKeyForUser(username));
+    if (!xStr) {
+        addToLog('CLIENT: Missing private key for this user', true);
+        return { success: false, message: 'Private key not found on this device.' };
+    }
+    const x = BigInt(xStr);
+    const y2 = r + c * x;
     addToLog('Step 3: Client Response', true);
     addToLog(`CLIENT: Calculating proof y2 = r + c*x = ${y2}`);
     await new Promise(resolve => setTimeout(resolve, 1000));

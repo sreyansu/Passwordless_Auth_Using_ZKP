@@ -124,9 +124,8 @@ function logout() {
 document.getElementById('registerForm').addEventListener('submit', async function(e) {
     e.preventDefault();
     const username = document.getElementById('regUsername').value;
-    const pin = BigInt(document.getElementById('regPin').value);
 
-    const result = await handleRegistration(username, pin);
+    const result = await handleRegistration(username);
     showMessage(result.message, !result.success);
     if (result.success) {
         this.reset();
@@ -136,9 +135,8 @@ document.getElementById('registerForm').addEventListener('submit', async functio
 document.getElementById('loginForm').addEventListener('submit', async function(e) {
     e.preventDefault();
     const username = document.getElementById('loginUsername').value;
-    const pin = BigInt(document.getElementById('loginPin').value);
 
-    const result = await handleLogin(username, pin);
+    const result = await handleLogin(username);
     showMessage(result.message, !result.success);
     
     if (result.success) {
