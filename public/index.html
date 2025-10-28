@@ -435,7 +435,8 @@
                 const publicKeyHex = Array.from(new Uint8Array(publicKey))
                     .map(b => b.toString(16).padStart(2, '0')).join('');
 
-                const response = await fetch('/register', {
+                const API_BASE = '/.netlify/functions';
+                const response = await fetch(`${API_BASE}/register`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
@@ -474,7 +475,8 @@
                 const publicKeyHex = Array.from(new Uint8Array(publicKey))
                     .map(b => b.toString(16).padStart(2, '0')).join('');
 
-                const response = await fetch('/login/start', {
+                const API_BASE = '/.netlify/functions';
+                const response = await fetch(`${API_BASE}/login-start`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
@@ -539,7 +541,8 @@
                     .map(b => b.toString(16).padStart(2, '0')).join('');
 
                 // Send the signature to the server for verification
-                const response = await fetch('/login/finish', {
+                const API_BASE = '/.netlify/functions';
+                const response = await fetch(`${API_BASE}/login-finish`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
@@ -585,7 +588,8 @@
             }
 
             try {
-                const response = await fetch('/me', {
+                const API_BASE = '/.netlify/functions';
+                const response = await fetch(`${API_BASE}/me`, {
                     method: 'GET',
                     headers: {
                         'Authorization': `Bearer ${authToken}`,
