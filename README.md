@@ -169,18 +169,3 @@ Try multiple users by generating different key pairs!
 - [@noble/secp256k1 Documentation](https://github.com/paulmillr/noble-secp256k1)
 - [Elliptic Curve Cryptography](https://andrea.corbellini.name/2015/05/17/elliptic-curve-cryptography-a-gentle-introduction/)
 
-## 🤝 Contributing
-
-This is a demo project for educational purposes. Feel free to:
-- Report issues or bugs
-- Suggest improvements
-- Add features (React frontend, database integration, etc.)
-- Improve documentation
-
-## 📄 License
-
-MIT License - feel free to use this code for learning and experimentation!
-
----
-
-**🎉 Enjoy exploring passwordless authentication with Zero-Knowledge Proofs!**
