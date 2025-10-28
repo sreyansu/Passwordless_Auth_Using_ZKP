@@ -1,4 +1,3 @@
-import { sessions, users } from './_shared/store.js';
 import jwt from 'jsonwebtoken';
 
 export const handler = async (event) => {
@@ -26,20 +25,13 @@ export const handler = async (event) => {
       return { statusCode: 403, body: JSON.stringify({ error: 'Invalid or expired token' }) };
     }
 
-    const { publicKey } = payload;
-    const user = users.get(publicKey);
-    if (!user) {
-      return { statusCode: 404, body: JSON.stringify({ error: 'User not found' }) };
-    }
-
     return {
       statusCode: 200,
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         success: true,
         user: {
-          publicKey: publicKey.substring(0, 16) + '...',
-          registeredAt: user.registeredAt,
+          publicKey: payload.publicKey.substring(0, 16) + '...',
           authenticated: true
         }
       })

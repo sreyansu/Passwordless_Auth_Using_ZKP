@@ -355,6 +355,7 @@
         let privateKey = null;
         let publicKey = null;
         let currentNonce = null;
+        let challengeToken = null;
         let authToken = null;
 
         // Make functions globally available
@@ -490,6 +491,7 @@
 
                 if (data.success) {
                     currentNonce = data.nonce;
+                    challengeToken = data.challengeToken;
                     document.getElementById('nonce').textContent = currentNonce;
                     document.getElementById('nonceDisplay').classList.remove('hidden');
                     document.getElementById('finishLoginBtn').classList.remove('hidden');
@@ -549,7 +551,8 @@
                     },
                     body: JSON.stringify({
                         publicKey: publicKeyHex,
-                        signature: signatureHex
+                        signature: signatureHex,
+                        challengeToken
                     })
                 });
 

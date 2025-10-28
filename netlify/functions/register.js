@@ -1,6 +1,4 @@
-import { users } from './_shared/store.js';
 import jwt from 'jsonwebtoken';
-import { randomBytes } from 'crypto';
 
 export const handler = async (event) => {
   try {
@@ -23,12 +21,6 @@ export const handler = async (event) => {
     if (!/^[0-9a-fA-F]+$/.test(publicKey) || publicKey.length < 100) {
       return { statusCode: 400, body: JSON.stringify({ error: 'Invalid public key format' }) };
     }
-
-    if (users.has(publicKey)) {
-      return { statusCode: 409, body: JSON.stringify({ error: 'User already registered' }) };
-    }
-
-    users.set(publicKey, { publicKey, nonce: null, registeredAt: new Date().toISOString() });
 
     return {
       statusCode: 200,

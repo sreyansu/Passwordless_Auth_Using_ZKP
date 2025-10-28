@@ -1,5 +1,5 @@
-import { users } from './_shared/store.js';
 import { randomBytes } from 'crypto';
+import jwt from 'jsonwebtoken';
 
 export const handler = async (event) => {
   try {
@@ -14,19 +14,18 @@ export const handler = async (event) => {
       return { statusCode: 400, body: JSON.stringify({ error: 'Public key is required' }) };
     }
 
-    const user = users.get(publicKey);
-    if (!user) {
-      return { statusCode: 404, body: JSON.stringify({ error: 'User not found. Please register first.' }) };
+    const { JWT_SECRET } = process.env;
+    if (!JWT_SECRET) {
+      return { statusCode: 500, body: JSON.stringify({ error: 'Server misconfigured: JWT_SECRET missing' }) };
     }
 
     const nonce = randomBytes(32).toString('hex');
-    user.nonce = nonce;
-    users.set(publicKey, user);
+    const challengeToken = jwt.sign({ publicKey, nonce }, JWT_SECRET, { expiresIn: '5m' });
 
     return {
       statusCode: 200,
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ success: true, nonce, message: 'Please sign this nonce with your private key' })
+      body: JSON.stringify({ success: true, nonce, challengeToken, message: 'Please sign this nonce with your private key' })
     };
   } catch (e) {
     return { statusCode: 500, body: JSON.stringify({ error: 'Failed to start login process' }) };
