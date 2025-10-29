@@ -252,6 +252,60 @@
             display: none;
         }
 
+        .log-container {
+            margin-top: 15px;
+            background: #0b1020;
+            color: #e6edf3;
+            border-radius: 8px;
+            border: 1px solid #263043;
+            padding: 12px;
+        }
+
+        .log-header {
+            color: #9fb6d1;
+            font-weight: 600;
+            margin-bottom: 8px;
+            font-size: 0.95em;
+        }
+
+        .log-list {
+            max-height: 200px;
+            overflow-y: auto;
+            font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+            font-size: 12px;
+            line-height: 1.4;
+            padding-right: 4px;
+        }
+
+        .log-item {
+            padding: 6px 8px;
+            border-bottom: 1px dashed #22314a;
+            display: flex;
+            gap: 8px;
+            align-items: baseline;
+        }
+
+        .log-item:last-child {
+            border-bottom: none;
+        }
+
+        .log-time {
+            color: #7aa2f7;
+            min-width: 64px;
+            text-align: right;
+        }
+
+        .log-msg {
+            color: #e6edf3;
+            flex: 1;
+            word-break: break-word;
+        }
+
+        .log-info .log-msg { color: #b3d4ff; }
+        .log-success .log-msg { color: #9ae6b4; }
+        .log-error .log-msg { color: #feb2b2; }
+        .log-step .log-msg { color: #fbd38d; }
+
         /* Mobile responsive */
         @media (max-width: 768px) {
             .main-content {
@@ -288,15 +342,6 @@
         <div class="header">
             <h1>ZKP Passwordless Authentication</h1>
         </div>
-
-        <!-- <div class="zkp-explanation">
-            <h3>🧠 How Zero-Knowledge Proof Works Here</h3>
-            <p><strong>The Magic:</strong> You can prove you own a private key without ever revealing it!</p>
-            <p><strong>The Process:</strong> You generate a key pair, register your public key, then prove ownership by
-                signing challenges with your private key. The server verifies using your public key - no passwords
-                needed!</p>
-        </div> -->
-
         <div class="main-content">
             <!-- Top Left: Key Generation -->
             <div class="section">
@@ -318,13 +363,7 @@
                 <h2><span class="section-icon">📝</span>Step 2: Register</h2>
                 <button onclick="register()" id="registerBtn" disabled>Register Public Key</button>
                 <div id="registerStatus"></div>
-                <div
-                    style="margin-top: 15px; padding: 15px; background: #f8f9fa; border-radius: 8px; font-size: 0.9em;">
-                    <h4 style="margin: 0 0 10px 0; color: #333;">🧠 Zero-Knowledge Proof Magic:</h4>
-                    <p style="margin: 0; color: #555; line-height: 1.4;">You prove you own a private key without ever
-                        revealing it! Generate keys → Register public key → Sign challenges → Server verifies without
-                        seeing your private key.</p>
-                </div>
+                
             </div>
 
             <!-- Bottom Left: Login -->
@@ -349,6 +388,11 @@
         </div>
 
         <div id="globalStatus"></div>
+
+        <div class="log-container">
+            <div class="log-header">Protocol Log</div>
+            <div id="protocolLog" class="log-list"></div>
+        </div>
     </div>
 
     <script>
@@ -369,6 +413,27 @@
         window.getMe = getMe;
         window.logout = logout;
 
+        function pad2(n) { return n.toString().padStart(2, '0'); }
+        function nowTime() {
+            const d = new Date();
+            return `${pad2(d.getHours())}:${pad2(d.getMinutes())}:${pad2(d.getSeconds())}`;
+        }
+        function appendLog(type, message) {
+            const list = document.getElementById('protocolLog');
+            const item = document.createElement('div');
+            item.className = `log-item log-${type}`;
+            const t = document.createElement('span');
+            t.className = 'log-time';
+            t.textContent = nowTime();
+            const msg = document.createElement('span');
+            msg.className = 'log-msg';
+            msg.textContent = message;
+            item.appendChild(t);
+            item.appendChild(msg);
+            list.appendChild(item);
+            list.scrollTop = list.scrollHeight;
+        }
+
         /**
          * Generate a new secp256k1 key pair
          * This creates the cryptographic foundation for our ZKP system
@@ -376,6 +441,7 @@
         async function generateKeys() {
             try {
                 console.log('Starting key generation...');
+                appendLog('step', 'Generating ECDSA P-256 key pair');
 
                 // Generate ECDSA key pair using P-256 curve (widely supported)
                 const keyPair = await window.crypto.subtle.generateKey(
@@ -388,6 +454,7 @@
                 );
 
                 console.log('Key pair generated');
+                appendLog('success', 'Key pair generated');
 
                 // Export both keys for display (demo purposes only!)
                 const publicKeyBuffer = await window.crypto.subtle.exportKey("spki", keyPair.publicKey);
@@ -410,6 +477,7 @@
                 // Ensure both key displays are visible and scrollable
                 console.log('Private key length:', privateKeyHex.length);
                 console.log('Public key length:', publicKeyHex.length);
+                appendLog('info', `Public key exported (${publicKeyHex.length} hex chars)`);
 
                 // Enable registration
                 document.getElementById('registerBtn').disabled = false;
@@ -418,10 +486,12 @@
                 console.log('Key pair generated successfully');
                 console.log('Private Key (DEMO ONLY):', privateKeyHex);
                 console.log('Public Key:', publicKeyHex);
+                appendLog('info', 'Ready to register public key');
 
             } catch (error) {
                 console.error('Key generation error:', error);
                 showStatus('globalStatus', 'Failed to generate keys: ' + error.message, 'error');
+                appendLog('error', 'Key generation failed: ' + error.message);
             }
         }
 
@@ -432,6 +502,7 @@
         async function register() {
             if (!publicKey) {
                 showStatus('registerStatus', 'Please generate keys first!', 'error');
+                appendLog('error', 'Register blocked: no public key');
                 return;
             }
 
@@ -440,6 +511,7 @@
                     .map(b => b.toString(16).padStart(2, '0')).join('');
 
                 const API_BASE = '/.netlify/functions';
+                appendLog('step', 'Sending registration request');
                 const response = await fetch(`${API_BASE}/register`, {
                     method: 'POST',
                     headers: {
@@ -455,13 +527,16 @@
                 if (data.success) {
                     showStatus('registerStatus', `Registration successful! Public key: ${data.publicKey}`, 'success');
                     document.getElementById('loginBtn').disabled = false;
+                    appendLog('success', 'Registration successful');
                 } else {
                     showStatus('registerStatus', 'Registration failed: ' + data.error, 'error');
+                    appendLog('error', 'Registration failed: ' + data.error);
                 }
 
             } catch (error) {
                 console.error('Registration error:', error);
                 showStatus('registerStatus', 'Registration failed: ' + error.message, 'error');
+                appendLog('error', 'Registration error: ' + error.message);
             }
         }
 
@@ -472,6 +547,7 @@
         async function startLogin() {
             if (!publicKey) {
                 showStatus('loginStatus', 'Please generate keys and register first!', 'error');
+                appendLog('error', 'Login start blocked: no public key');
                 return;
             }
 
@@ -480,6 +556,7 @@
                     .map(b => b.toString(16).padStart(2, '0')).join('');
 
                 const API_BASE = '/.netlify/functions';
+                appendLog('step', 'Requesting challenge nonce from server');
                 const response = await fetch(`${API_BASE}/login-start`, {
                     method: 'POST',
                     headers: {
@@ -501,13 +578,17 @@
                     document.getElementById('finishLoginBtn').disabled = false;
 
                     showStatus('loginStatus', 'Challenge received! Now sign it to prove your identity.', 'info');
+                    appendLog('success', `Challenge received: ${currentNonce.slice(0, 12)}…`);
+                    appendLog('info', 'Ready to sign challenge with private key');
                 } else {
                     showStatus('loginStatus', 'Login start failed: ' + data.error, 'error');
+                    appendLog('error', 'Login start failed: ' + data.error);
                 }
 
             } catch (error) {
                 console.error('Login start error:', error);
                 showStatus('loginStatus', 'Login start failed: ' + error.message, 'error');
+                appendLog('error', 'Login start error: ' + error.message);
             }
         }
 
@@ -518,6 +599,7 @@
         async function finishLogin() {
             if (!privateKey || !currentNonce) {
                 showStatus('loginStatus', 'Please start login first!', 'error');
+                appendLog('error', 'Finish login blocked: missing key or nonce');
                 return;
             }
 
@@ -526,6 +608,12 @@
                 const encoder = new TextEncoder();
                 const message = encoder.encode(currentNonce);
 
+                appendLog('step', 'Signing challenge with private key');
+                (function(){
+                    const hex = Array.from(message).map(b => b.toString(16).padStart(2, '0')).join('');
+                    appendLog('info', `Signed data (utf8): ${currentNonce}`);
+                    appendLog('info', `Signed data hex (${hex.length} chars): ${hex.slice(0, 48)}…`);
+                })();
                 // Sign the message using Web Crypto API
                 // This is the ZKP magic - the signature proves we know the private key
                 // without revealing it to anyone
@@ -541,12 +629,14 @@
                 // Convert signature to hex
                 const signatureHex = Array.from(new Uint8Array(signature))
                     .map(b => b.toString(16).padStart(2, '0')).join('');
+                appendLog('success', `Signature created (${signatureHex.length} hex chars)`);
 
                 const publicKeyHex = Array.from(new Uint8Array(publicKey))
                     .map(b => b.toString(16).padStart(2, '0')).join('');
 
                 // Send the signature to the server for verification
                 const API_BASE = '/.netlify/functions';
+                appendLog('step', 'Sending signature to server for verification');
                 const response = await fetch(`${API_BASE}/login-finish`, {
                     method: 'POST',
                     headers: {
@@ -564,6 +654,7 @@
                 if (data.success) {
                     authToken = data.token;
                     showStatus('loginStatus', `🎉 Authentication successful! Token expires in ${data.expiresIn}.`, 'success');
+                    appendLog('success', 'Server verified signature. Authentication successful');
 
                     // Enable protected actions
                     document.getElementById('getMeBtn').disabled = false;
@@ -575,11 +666,13 @@
 
                 } else {
                     showStatus('loginStatus', 'Authentication failed: ' + data.error, 'error');
+                    appendLog('error', 'Authentication failed: ' + data.error);
                 }
 
             } catch (error) {
                 console.error('Login finish error:', error);
                 showStatus('loginStatus', 'Authentication failed: ' + error.message, 'error');
+                appendLog('error', 'Login finish error: ' + error.message);
             }
         }
 
@@ -590,11 +683,13 @@
         async function getMe() {
             if (!authToken) {
                 showStatus('userInfo', 'Please login first!', 'error');
+                appendLog('error', 'GetMe blocked: no auth token');
                 return;
             }
 
             try {
                 const API_BASE = '/.netlify/functions';
+                appendLog('step', 'Requesting protected resource /me');
                 const response = await fetch(`${API_BASE}/me`, {
                     method: 'GET',
                     headers: {
@@ -615,13 +710,16 @@
                         </div>
                     `;
                     document.getElementById('userInfo').innerHTML = userInfoHtml;
+                    appendLog('success', 'Protected resource retrieved');
                 } else {
                     showStatus('userInfo', 'Failed to get user info: ' + data.error, 'error');
+                    appendLog('error', 'GetMe failed: ' + data.error);
                 }
 
             } catch (error) {
                 console.error('Get user info error:', error);
                 showStatus('userInfo', 'Failed to get user info: ' + error.message, 'error');
+                appendLog('error', 'GetMe error: ' + error.message);
             }
         }
 
@@ -644,6 +742,7 @@
             document.getElementById('loginStatus').innerHTML = '';
 
             showStatus('globalStatus', 'Logged out successfully!', 'info');
+            appendLog('info', 'Logged out and cleared state');
         }
 
         /**
